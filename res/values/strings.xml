@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">Slalom Digital Smart Alert</string>
+  <string name="short_app_name">Smart Alert</string>
+
+  <string name="app_description">
+      Slalom Digital demo of smart alerts leveraging Urban Airship and sign-in with Facebook\n\n
+  </string>
+</resources>
