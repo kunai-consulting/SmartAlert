@@ -3,11 +3,11 @@
       android:versionCode="1"
       android:versionName="1.0" package="com.slalomdigital.smartalert">
       
-    <!-- minSdkVersion sets runtime compatibility ("will run on API level 4") -->
+    <!-- minSdkVersion sets runtime compatibility ("will run on API level 7") -->
     <!-- targetSdkVersion should be set to the latest version tested, to disable compatibility modes 
-            ("was tested with API level 9 features") -->
-    <uses-sdk android:minSdkVersion="4" 
-        android:targetSdkVersion="9"/>
+            ("was tested with API level 15 features") -->
+    <uses-sdk android:minSdkVersion="7" 
+        android:targetSdkVersion="15"/>
     
     <!-- REQUIRED -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -31,8 +31,7 @@
     
     <!-- REQUIRED for GCM (when minSdkVersion < 16) -->
     <!-- Only this application can receive the messages and registration result -->
-    <!-- MODIFICATION REQUIRED - Replace "com.urbanairship.push.sample" with your package name -->
-    <permission android:name="com.slalomdigital.smartalert.C2D_MESSAGE" android:protectionLevel="signature" />
+    <permission android:name="com.slalomdigital.smartalert.permission.C2D_MESSAGE" android:protectionLevel="signature" />
     <uses-permission android:name="com.slalomdigital.smartalert.permission.C2D_MESSAGE" />
     
     <!-- This app has permission to register and receive message -->
@@ -41,24 +40,25 @@
     <!-- Helium Only -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
-    <application android:label="@string/app_name" 
-    	android:icon="@drawable/icon" 
-    	android:name="com.slalomdigital.smartalert.MyApplication"
-        android:debuggable="true"
-    	android:allowClearUserData="true" 
-    	android:enabled="true">
-    	
-        <activity android:name="com.slalomdigital.smartalert.MainActivity"
-                  android:label="@string/app_name">
+    <application android:label="@string/app_name"
+        android:icon="@drawable/icon"
+        android:name="com.slalomdigital.smartalert.RichPushApplication"
+        android:theme="@style/Theme.Sherlock"
+        android:debuggable="true">
+
+        <activity android:name=".MainActivity"
+                  android:label="@string/app_name"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <activity android:name="com.slalomdigital.smartalert.PushPreferencesActivity" />
-        <activity android:name="com.slalomdigital.smartalert.LocationActivity" />
-        
+
+        <activity android:name=".InboxActivity" />
+        <activity android:name=".MessageActivity" />
+        <activity android:name=".PushPreferencesActivity" />
+
         <!-- REQUIRED -->
         <receiver android:name="com.urbanairship.CoreReceiver">
             <!-- REQUIRED IntentFilter - For Helium and Hybrid -->
@@ -67,17 +67,12 @@
               <action android:name="android.intent.action.ACTION_SHUTDOWN" />
             </intent-filter>
         </receiver>
-		
-		<!-- REQUIRED for GCM and Hybrid -->
-        <receiver android:name="com.urbanairship.push.GCMPushReceiver"
-                android:permission="com.google.android.c2dm.permission.SEND"
-                android:process=":com.urbanairship.process">        
-          <intent-filter>
-              <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-              <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-              <!-- MODIFICATION REQUIRED - Use your package name as the category -->
-              <category android:name="com.slalomdigital.smartalert" />
-          </intent-filter>
+
+        <receiver android:name="com.slalomdigital.smartalert.PushReceiver">
+            <!-- REQUIRED IntentFilter - For Helium and Hybrid -->
+            <intent-filter>
+                <action android:name="com.urbanairship.push.PushManager.ACTION_NOTIFICATION_OPENED" />
+            </intent-filter>
         </receiver>
 
         <!-- REQUIRED -->
@@ -85,32 +80,26 @@
             with a colon (:) to make it run in a separate,
             private process -->
         <service android:name="com.urbanairship.push.PushService"
-                android:process=":com.urbanairship.process" android:label="Push Notification Service"/>
-        
-        <service android:name="com.urbanairship.push.PushWorkerService"
-                android:process=":com.urbanairship.process" android:label="Push Notification Worker Service"/>
-        
-        <service android:name="com.urbanairship.analytics.EventService"
-                android:process=":com.urbanairship.process" android:label="Event Service"/>
-        
+                android:process=":com.urbanairship.process"/>
+        <service android:name="com.urbanairship.push.PushWorkerService" android:label="Push Notification Worker Service"/>
+        <service android:name="com.urbanairship.analytics.EventService" android:label="Event Service"/>
+
         <!-- REQUIRED -->
         <!-- The 'android:process' parameter is optional. Set it to a value starting
             with a colon (:) to make it run in a separate,
             private process -->
         <service android:name="com.urbanairship.location.LocationService"
-                android:process=":com.urbanairship.process" android:label="Segments Service"/>
+                android:process=":com.urbanairship.process"/>
 
-        <!-- OPTIONAL, if you want to receive push, push opened and registration completed intents -->
-        <!-- Replace the receiver below with your package and class name -->
-        <receiver android:name="com.slalomdigital.smartalert.IntentReceiver" />
-        
+        <service android:name="com.urbanairship.richpush.RichPushUpdateService"
+                 android:process=":com.urbanairship.process"/>
+
         <!-- REQUIRED -->
         <!-- This is required for persisting preferences related to push and location -->
         <provider android:name="com.urbanairship.UrbanAirshipProvider"
-            android:authorities="com.slalomdigital.smartalert.provider"
+            android:authorities="com.slalomdigital.smartalert.urbanairship.provider"
             android:exported="false"
             android:multiprocess="true" />
-
     </application>
     
 </manifest> 

@@ -1,30 +1,10 @@
 /*
-Copyright 2009-2011 Urban Airship Inc. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE URBAN AIRSHIP INC ``AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
-EVENT SHALL URBAN AIRSHIP INC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright 2012 Urban Airship and Contributors
  */
 
 package com.slalomdigital.smartalert;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.format.DateFormat;
@@ -35,13 +15,13 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.urbanairship.UAirship;
-import com.urbanairship.analytics.InstrumentedActivity;
 import com.urbanairship.location.LocationPreferences;
 import com.urbanairship.location.UALocationManager;
 import com.urbanairship.push.PushManager;
 import com.urbanairship.push.PushPreferences;
-import com.slalomdigital.smartalert.R;
+import com.urbanairship.util.UAStringUtil;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -49,7 +29,7 @@ import java.util.Date;
 // This class represents the UI and implementation of the activity enabling users
 // to set Quiet Time preferences.
 
-public class PushPreferencesActivity extends InstrumentedActivity {
+public class PushPreferencesActivity extends SherlockFragmentActivity {
 
     CheckBox pushEnabled;
     CheckBox soundEnabled;
@@ -57,11 +37,9 @@ public class PushPreferencesActivity extends InstrumentedActivity {
     CheckBox quietTimeEnabled;
     CheckBox locationEnabled;
     CheckBox backgroundLocationEnabled;
-    CheckBox foregroundLocationEnabled;
 
     TextView locationEnabledLabel;
     TextView backgroundLocationEnabledLabel;
-    TextView foregroundLocationEnabledLabel;
 
     TimePicker startTime;
     TimePicker endTime;
@@ -83,10 +61,6 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         backgroundLocationEnabled.setEnabled(active);
     }
 
-    private void foregroundLocationActive(boolean active) {
-        foregroundLocationEnabled.setEnabled(active);
-    }
-
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -101,10 +75,8 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         quietTimeEnabled = (CheckBox) findViewById(R.id.quiet_time_enabled);
         locationEnabled = (CheckBox) findViewById(R.id.location_enabled);
         backgroundLocationEnabled = (CheckBox) findViewById(R.id.background_location_enabled);
-        foregroundLocationEnabled = (CheckBox) findViewById(R.id.foreground_location_enabled);
         locationEnabledLabel = (TextView) findViewById(R.id.location_enabled_label);
         backgroundLocationEnabledLabel = (TextView) findViewById(R.id.background_location_enabled_label);
-        foregroundLocationEnabledLabel = (TextView) findViewById(R.id.foreground_location_enabled_label);
 
         startTime = (TimePicker) findViewById(R.id.start_time);
         endTime = (TimePicker) findViewById(R.id.end_time);
@@ -133,7 +105,6 @@ public class PushPreferencesActivity extends InstrumentedActivity {
             @Override
             public void onClick(View v) {
                 backgroundLocationActive(((CheckBox)v).isChecked());
-                foregroundLocationActive(((CheckBox)v).isChecked());
             }
         });
 
@@ -144,6 +115,7 @@ public class PushPreferencesActivity extends InstrumentedActivity {
     @Override
     public void onStart() {
         super.onStart();
+        UAirship.shared().getAnalytics().activityStarted(this);
 
         boolean isPushEnabled = pushPrefs.isPushEnabled();
         pushEnabled.setChecked(isPushEnabled);
@@ -158,15 +130,12 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         if (!UAirship.shared().getAirshipConfigOptions().locationOptions.locationServiceEnabled) {
             locationEnabled.setVisibility(View.GONE);
             backgroundLocationEnabled.setVisibility(View.GONE);
-            foregroundLocationEnabled.setVisibility(View.GONE);
             locationEnabledLabel.setVisibility(View.GONE);
             backgroundLocationEnabledLabel.setVisibility(View.GONE);
-            foregroundLocationEnabledLabel.setVisibility(View.GONE);
 
         } else {
             locationEnabled.setChecked(locPrefs.isLocationEnabled());
             backgroundLocationEnabled.setChecked(locPrefs.isBackgroundLocationEnabled());
-            foregroundLocationEnabled.setChecked(locPrefs.isForegroundLocationEnabled());
         }
 
         //this will be null if a quiet time interval hasn't been set
@@ -177,12 +146,21 @@ public class PushPreferencesActivity extends InstrumentedActivity {
             endTime.setCurrentHour(interval[1].getHours());
             endTime.setCurrentMinute(interval[1].getMinutes());
         }
+
+        this.displayMessageIfNecessary();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        this.dismissMessageIfNecessary();
     }
 
     // When the activity is closed, save the user's Push preferences
     @Override
     public void onStop() {
         super.onStop();
+        UAirship.shared().getAnalytics().activityStopped(this);
 
         boolean isPushEnabledInActivity = pushEnabled.isChecked();
         boolean isQuietTimeEnabledInActivity = quietTimeEnabled.isChecked();
@@ -217,7 +195,34 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         }
 
         this.handleLocation();
+    }
 
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        this.startActivity(intent);
+        this.finish();
+    }
+
+    // helpers
+
+    private void displayMessageIfNecessary() {
+        String messageId = this.getIntent().getStringExtra(RichPushApplication.MESSAGE_ID_RECEIVED_KEY);
+        if (!UAStringUtil.isEmpty(messageId)) {
+            MessageFragment message = MessageFragment.newInstance(messageId);
+            message.show(this.getSupportFragmentManager(), R.id.floating_message_pane, "message");
+            this.findViewById(R.id.floating_message_pane).setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void dismissMessageIfNecessary() {
+        MessageFragment message = (MessageFragment) this.getSupportFragmentManager()
+                .findFragmentByTag("message");
+        if (message != null) {
+            message.dismiss();
+            this.findViewById(R.id.floating_message_pane).setVisibility(View.INVISIBLE);
+        }
     }
 
     private void handleLocation() {
@@ -226,17 +231,15 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         }
         boolean isLocationEnabledInActivity = locationEnabled.isChecked();
         boolean isBackgroundLocationEnabledInActivity = backgroundLocationEnabled.isChecked();
-        boolean isForegroundLocationEnabledInActivity = foregroundLocationEnabled.isChecked();
 
-        // Set the location enable preference first because it will be used
-        // in the logic to enable/disable background and foreground locations.
         if (isLocationEnabledInActivity) {
             UALocationManager.enableLocation();
+            handleBackgroundLocationPreference(isBackgroundLocationEnabledInActivity);
         } else {
+            handleBackgroundLocationPreference(isBackgroundLocationEnabledInActivity);
             UALocationManager.disableLocation();
         }
-        handleBackgroundLocationPreference(isBackgroundLocationEnabledInActivity);
-        handleForegroundLocationPreference(isForegroundLocationEnabledInActivity);
+
     }
 
     private void handleBackgroundLocationPreference(boolean backgroundLocationEnabled) {
@@ -247,13 +250,6 @@ public class PushPreferencesActivity extends InstrumentedActivity {
         }
     }
 
-    private void handleForegroundLocationPreference(boolean foregroundLocationEnabled) {
-        if (foregroundLocationEnabled) {
-            UALocationManager.enableForegroundLocation();
-        } else {
-            UALocationManager.disableForegroundLocation();
-        }
-    }
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);

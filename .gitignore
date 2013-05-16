@@ -3,4 +3,6 @@ gen/*
 .idea
 project.properties
 local.properties
+.DS_Store
+out/*
 
