@@ -11,7 +11,7 @@ import com.urbanairship.push.PushManager;
 import com.urbanairship.richpush.RichPushManager;
 import com.urbanairship.richpush.RichPushMessageJavaScript;
 
-public class RichPushApplication extends Application {
+public class SmartAlertApplication extends Application {
 
     public static final String MESSAGE_ID_RECEIVED_KEY = "com.slalomdigital.smartalert.MESSAGE_ID_RECEIVED";
     public static final String HOME_ACTIVITY = "Home";

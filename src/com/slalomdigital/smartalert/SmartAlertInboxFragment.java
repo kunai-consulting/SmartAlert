@@ -9,10 +9,10 @@ import android.util.SparseArray;
 
 import com.urbanairship.UrbanAirshipProvider;
 
-public class RichPushSampleInboxFragment extends InboxFragment {
+public class SmartAlertInboxFragment extends InboxFragment {
 
-    public static RichPushSampleInboxFragment newInstance(int rowLayoutId, int emptyListStringId) {
-        RichPushSampleInboxFragment inbox = new RichPushSampleInboxFragment();
+    public static SmartAlertInboxFragment newInstance(int rowLayoutId, int emptyListStringId) {
+        SmartAlertInboxFragment inbox = new SmartAlertInboxFragment();
         Bundle arguments = new Bundle();
         arguments.putInt(ROW_LAYOUT_ID_KEY, rowLayoutId);
         arguments.putInt(EMPTY_LIST_STRING_KEY, emptyListStringId);

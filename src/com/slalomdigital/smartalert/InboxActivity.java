@@ -149,9 +149,9 @@ RichPushInbox.Listener {
     @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         String navName = this.navAdapter.getItem(itemPosition);
-        if (RichPushApplication.HOME_ACTIVITY.equals(navName)) {
+        if (SmartAlertApplication.HOME_ACTIVITY.equals(navName)) {
             this.onBackPressed();
-        } else if (RichPushApplication.INBOX_ACTIVITY.equals(navName)) {
+        } else if (SmartAlertApplication.INBOX_ACTIVITY.equals(navName)) {
             // do nothing, we're here
         }
         return true;
@@ -287,14 +287,14 @@ RichPushInbox.Listener {
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
         this.navAdapter = new ArrayAdapter<String>(this, R.layout.sherlock_spinner_dropdown_item,
-                RichPushApplication.navList);
+                SmartAlertApplication.navList);
         actionBar.setListNavigationCallbacks(this.navAdapter, this);
-        actionBar.setSelectedNavigationItem(this.navAdapter.getPosition(RichPushApplication.INBOX_ACTIVITY));
+        actionBar.setSelectedNavigationItem(this.navAdapter.getPosition(SmartAlertApplication.INBOX_ACTIVITY));
         this.startActionModeIfNecessary(this.firstMessageIdSelected);
     }
 
     private void setPendingMessageIdFromIntent(Intent intent) {
-        pendingMessageId = intent.getStringExtra(RichPushApplication.MESSAGE_ID_RECEIVED_KEY);
+        pendingMessageId = intent.getStringExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY);
 
         if(!UAStringUtil.isEmpty(pendingMessageId)) {
             Logger.debug("Received message id " + pendingMessageId);

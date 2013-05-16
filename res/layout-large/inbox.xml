@@ -21,7 +21,7 @@
             android:layout_height="fill_parent"
         />
         <fragment
-            class="com.slalomdigital.smartalert.RichPushSampleInboxFragment"
+            class="com.slalomdigital.smartalert.SmartAlertInboxFragment"
             android:id="@+id/inbox"
             android:layout_width="300dp"
             android:layout_height="fill_parent"

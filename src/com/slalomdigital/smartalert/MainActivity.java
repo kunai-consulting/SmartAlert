@@ -75,9 +75,9 @@ ActionBar.OnNavigationListener {
     @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         String navName = this.navAdapter.getItem(itemPosition);
-        if (RichPushApplication.HOME_ACTIVITY.equals(navName)) {
+        if (SmartAlertApplication.HOME_ACTIVITY.equals(navName)) {
             // do nothing, we're here
-        } else if (RichPushApplication.INBOX_ACTIVITY.equals(navName)) {
+        } else if (SmartAlertApplication.INBOX_ACTIVITY.equals(navName)) {
             Intent intent = new Intent(this, InboxActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             this.startActivity(intent);
@@ -88,7 +88,7 @@ ActionBar.OnNavigationListener {
     // helpers
 
     private void displayMessageIfNecessary() {
-        String messageId = this.getIntent().getStringExtra(RichPushApplication.MESSAGE_ID_RECEIVED_KEY);
+        String messageId = this.getIntent().getStringExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY);
         if (!UAStringUtil.isEmpty(messageId)) {
             MessageFragment message = MessageFragment.newInstance(messageId);
             message.show(this.getSupportFragmentManager(), R.id.floating_message_pane, "message");
@@ -112,7 +112,7 @@ ActionBar.OnNavigationListener {
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
         this.navAdapter = new ArrayAdapter<String>(this, R.layout.sherlock_spinner_dropdown_item,
-                RichPushApplication.navList);
+                SmartAlertApplication.navList);
         actionBar.setListNavigationCallbacks(this.navAdapter, this);
         actionBar.setSelectedNavigationItem(this.navAdapter.getPosition("Home"));
     }

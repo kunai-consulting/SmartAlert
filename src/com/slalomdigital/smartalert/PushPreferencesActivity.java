@@ -208,7 +208,7 @@ public class PushPreferencesActivity extends SherlockFragmentActivity {
     // helpers
 
     private void displayMessageIfNecessary() {
-        String messageId = this.getIntent().getStringExtra(RichPushApplication.MESSAGE_ID_RECEIVED_KEY);
+        String messageId = this.getIntent().getStringExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY);
         if (!UAStringUtil.isEmpty(messageId)) {
             MessageFragment message = MessageFragment.newInstance(messageId);
             message.show(this.getSupportFragmentManager(), R.id.floating_message_pane, "message");
