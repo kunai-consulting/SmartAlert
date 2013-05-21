@@ -4,6 +4,9 @@
 
 package com.slalomdigital.smartalert;
 
+import com.facebook.*;
+import com.facebook.model.*;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -34,6 +37,30 @@ ActionBar.OnNavigationListener {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
+
+        // start Facebook Login
+        Session.openActiveSession(this, true, new Session.StatusCallback() {
+
+            // callback when session changes state
+            @Override
+            public void call(Session session, SessionState state, Exception exception) {
+                if (session.isOpened()) {
+                    // make request to the /me API
+                    Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
+
+                        // callback after Graph API response with user object
+                        @Override
+                        public void onCompleted(GraphUser user, Response response) {
+                            if (user != null) {
+                                //TODO: Add some code to the app to show the user once they log in
+                                //TextView welcome = (TextView) findViewById(R.id.welcome);
+                                //welcome.setText("Hello " + user.getName() + "!");
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
@@ -83,6 +110,12 @@ ActionBar.OnNavigationListener {
             this.startActivity(intent);
         }
         return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
     }
 
     // helpers
