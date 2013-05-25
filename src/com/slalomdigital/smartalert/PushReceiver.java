@@ -21,23 +21,39 @@ public class PushReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (!intent.getAction().equals(PushManager.ACTION_NOTIFICATION_OPENED)) return;
 
-        if (!RichPushManager.isRichPushMessage(intent.getExtras())) return;
-        String messageId = intent.getStringExtra("_uamid");
-        Logger.debug("Notified of a notification opened with id " + messageId);
+        if (!RichPushManager.isRichPushMessage(intent.getExtras())) {
+            // Fake it...
+            String activityName = intent.getStringExtra(ACTIVITY_NAME_KEY);
+            // default to the Inbox
+            Class<? extends Activity> intentClass = InboxActivity.class;
+            if ("home".equals(activityName)) {
+                intentClass = MainActivity.class;
+            } else if ("preferences".equals(activityName)) {
+                intentClass = PushPreferencesActivity.class;
+            }
 
-        String activityName = intent.getStringExtra(ACTIVITY_NAME_KEY);
-        // default to the Inbox
-        Class<? extends Activity> intentClass = InboxActivity.class;
-        if ("home".equals(activityName)) {
-            intentClass = MainActivity.class;
-        } else if ("preferences".equals(activityName)) {
-            intentClass = PushPreferencesActivity.class;
+            Intent messageIntent = new Intent(context, intentClass);
+            messageIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(messageIntent);
+        } else {
+            // Real Rich Push...
+            String messageId = intent.getStringExtra("_uamid");
+            Logger.debug("Notified of a notification opened with id " + messageId);
+
+            String activityName = intent.getStringExtra(ACTIVITY_NAME_KEY);
+            // default to the Inbox
+            Class<? extends Activity> intentClass = InboxActivity.class;
+            if ("home".equals(activityName)) {
+                intentClass = MainActivity.class;
+            } else if ("preferences".equals(activityName)) {
+                intentClass = PushPreferencesActivity.class;
+            }
+
+            Intent messageIntent = new Intent(context, intentClass);
+            messageIntent.putExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY, messageId);
+            messageIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(messageIntent);
         }
-
-        Intent messageIntent = new Intent(context, intentClass);
-        messageIntent.putExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY, messageId);
-        messageIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(messageIntent);
     }
 
 }

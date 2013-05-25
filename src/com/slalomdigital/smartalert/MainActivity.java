@@ -23,7 +23,7 @@ import com.urbanairship.util.UAStringUtil;
 
 @SuppressWarnings("unused")
 public class MainActivity extends SherlockFragmentActivity implements
-ActionBar.OnNavigationListener {
+        ActionBar.OnNavigationListener {
     protected static final String TAG = "MainActivity";
 
     static final String ALIAS_KEY = "com.slalomdigital.smartalert.ALIAS";
@@ -90,12 +90,12 @@ ActionBar.OnNavigationListener {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-        case R.id.preferences:
-            this.startActivity(new Intent(this, PushPreferencesActivity.class));
-            return true;
-        default:
-            return super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case R.id.preferences:
+                this.startActivity(new Intent(this, PushPreferencesActivity.class));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 

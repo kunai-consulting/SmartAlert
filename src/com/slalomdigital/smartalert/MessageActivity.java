@@ -27,7 +27,7 @@ public class MessageActivity extends SherlockFragmentActivity {
         this.setContentView(R.layout.message);
 
         this.currentMessageId = savedInstanceState == null ? this.getIntent().getStringExtra(EXTRA_MESSAGE_ID_KEY) :
-            savedInstanceState.getString(EXTRA_MESSAGE_ID_KEY);
+                savedInstanceState.getString(EXTRA_MESSAGE_ID_KEY);
         this.messagePager = (MessageViewPager) this.findViewById(R.id.message_pager);
         this.messagePager.setOnPageChangeListener(new MessageViewPagerListener());
     }
@@ -63,7 +63,7 @@ public class MessageActivity extends SherlockFragmentActivity {
         public void onPageSelected(int position) {
             MessageActivity.this.currentMessageId = MessageActivity.this.messagePager.getMessageId(position);
             RichPushManager.shared().getRichPushUser().getInbox()
-            .getMessage(MessageActivity.this.currentMessageId).markRead();
+                    .getMessage(MessageActivity.this.currentMessageId).markRead();
         }
     }
 

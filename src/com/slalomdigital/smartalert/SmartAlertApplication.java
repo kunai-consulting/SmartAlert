@@ -16,8 +16,8 @@ public class SmartAlertApplication extends Application {
     public static final String MESSAGE_ID_RECEIVED_KEY = "com.slalomdigital.smartalert.MESSAGE_ID_RECEIVED";
     public static final String HOME_ACTIVITY = "Home";
     public static final String INBOX_ACTIVITY = "Inbox";
-    public static final String[] navList = new String[] {
-        HOME_ACTIVITY, INBOX_ACTIVITY
+    public static final String[] navList = new String[]{
+            HOME_ACTIVITY, INBOX_ACTIVITY
     };
 
     @Override

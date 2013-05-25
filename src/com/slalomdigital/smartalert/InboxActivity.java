@@ -39,12 +39,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class InboxActivity extends SherlockFragmentActivity implements
-InboxFragment.OnMessageListener,
-ActionBar.OnNavigationListener,
-ActionMode.Callback,
-MessageViewPager.ViewPagerTouchListener,
-RichPushManager.Listener,
-RichPushInbox.Listener {
+        InboxFragment.OnMessageListener,
+        ActionBar.OnNavigationListener,
+        ActionMode.Callback,
+        MessageViewPager.ViewPagerTouchListener,
+        RichPushManager.Listener,
+        RichPushInbox.Listener {
     private static final SimpleDateFormat UA_DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     static final String CHECKED_IDS_KEY = "com.slalomdigital.smartalert.CHECKED_IDS";
@@ -134,14 +134,14 @@ RichPushInbox.Listener {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-        case android.R.id.home:
-            this.onBackPressed();
-            break;
-        case R.id.refresh:
-            inbox.setListShownNoAnimation(false);
-            RichPushManager.shared().refreshMessages();
-            break;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.onBackPressed();
+                break;
+            case R.id.refresh:
+                inbox.setListShownNoAnimation(false);
+                RichPushManager.shared().refreshMessages();
+                break;
         }
         return true;
     }
@@ -170,10 +170,10 @@ RichPushInbox.Listener {
         if (RichPushManager.shared().getRichPushUser().getInbox()
                 .getMessage(this.firstMessageIdSelected).isRead()) {
             menu.findItem(R.id.mark_read_or_unread).setIcon(R.drawable.mark_unread)
-            .setTitle(this.getString(R.string.mark_unread));
+                    .setTitle(this.getString(R.string.mark_unread));
         } else {
             menu.findItem(R.id.mark_read_or_unread).setIcon(R.drawable.mark_read)
-            .setTitle(this.getString(R.string.mark_read));
+                    .setTitle(this.getString(R.string.mark_read));
         }
         return true;
     }
@@ -181,27 +181,27 @@ RichPushInbox.Listener {
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         Logger.debug("onActionItemClicked");
-        switch(item.getItemId()) {
-        case R.id.mark_read_or_unread:
-            if (this.getString(R.string.mark_read).equals(item.getTitle())) {
+        switch (item.getItemId()) {
+            case R.id.mark_read_or_unread:
+                if (this.getString(R.string.mark_read).equals(item.getTitle())) {
+                    RichPushManager.shared().getRichPushUser().getInbox()
+                            .markMessagesRead(this.checkedIds);
+                } else {
+                    RichPushManager.shared().getRichPushUser().getInbox()
+                            .markMessagesUnread(this.checkedIds);
+                }
+                this.actionMode.finish();
+                return true;
+            case R.id.delete:
                 RichPushManager.shared().getRichPushUser().getInbox()
-                .markMessagesRead(this.checkedIds);
-            } else {
-                RichPushManager.shared().getRichPushUser().getInbox()
-                .markMessagesUnread(this.checkedIds);
-            }
-            this.actionMode.finish();
-            return true;
-        case R.id.delete:
-            RichPushManager.shared().getRichPushUser().getInbox()
-            .deleteMessages(this.checkedIds);
-            this.actionMode.finish();
-            return true;
-        case R.id.abs__action_mode_close_button:
-            this.actionMode.finish();
-            return true;
-        default:
-            return false;
+                        .deleteMessages(this.checkedIds);
+                this.actionMode.finish();
+                return true;
+            case R.id.abs__action_mode_close_button:
+                this.actionMode.finish();
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -246,7 +246,7 @@ RichPushInbox.Listener {
                 this.messagePager.setViewPagerTouchListener(this);
                 this.handle = (ImageView) this.findViewById(R.id.handle);
                 this.handle.setBackgroundResource(this.inbox.isVisible() ? R.drawable.inbox_open :
-                    R.drawable.inbox_close);
+                        R.drawable.inbox_close);
                 this.handle.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -296,13 +296,13 @@ RichPushInbox.Listener {
     private void setPendingMessageIdFromIntent(Intent intent) {
         pendingMessageId = intent.getStringExtra(SmartAlertApplication.MESSAGE_ID_RECEIVED_KEY);
 
-        if(!UAStringUtil.isEmpty(pendingMessageId)) {
+        if (!UAStringUtil.isEmpty(pendingMessageId)) {
             Logger.debug("Received message id " + pendingMessageId);
         }
     }
 
     private void showPendingMessageId() {
-        if(!UAStringUtil.isEmpty(pendingMessageId)) {
+        if (!UAStringUtil.isEmpty(pendingMessageId)) {
             showMessage(pendingMessageId);
             pendingMessageId = null;
         }
@@ -347,9 +347,9 @@ RichPushInbox.Listener {
                 view.setOnClickListener(InboxActivity.this.checkBoxListener);
                 view.setTag(message.getMessageId());
                 if (InboxActivity.this.checkedIds.contains(message.getMessageId())) {
-                    ((CheckBox)view).setChecked(true);
+                    ((CheckBox) view).setChecked(true);
                 } else {
-                    ((CheckBox)view).setChecked(false);
+                    ((CheckBox) view).setChecked(false);
                 }
             }
             view.setFocusable(false);
@@ -369,7 +369,7 @@ RichPushInbox.Listener {
         @Override
         public void onClick(View view) {
             String messageId = (String) view.getTag();
-            if (((CheckBox)view).isChecked()) {
+            if (((CheckBox) view).isChecked()) {
                 InboxActivity.this.checkedIds.add(messageId);
             } else {
                 InboxActivity.this.checkedIds.remove(messageId);
@@ -418,16 +418,16 @@ RichPushInbox.Listener {
         public Dialog onCreateDialog(Bundle savedInstanceState) {
 
             return new AlertDialog.Builder(getActivity())
-            .setIcon(R.drawable.icon)
-            .setTitle("Unable to retrieve new messages")
-            .setMessage("Please try again later")
-            .setNeutralButton("OK",
-                    new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int whichButton) {
-                    dialog.dismiss();
-                }
-            }
+                    .setIcon(R.drawable.icon)
+                    .setTitle("Unable to retrieve new messages")
+                    .setMessage("Please try again later")
+                    .setNeutralButton("OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    dialog.dismiss();
+                                }
+                            }
                     )
                     .create();
         }

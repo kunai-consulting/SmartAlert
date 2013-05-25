@@ -88,23 +88,23 @@ public class PushPreferencesActivity extends SherlockFragmentActivity {
 
             @Override
             public void onClick(View v) {
-                pushSettingsActive(((CheckBox)v).isChecked());
+                pushSettingsActive(((CheckBox) v).isChecked());
             }
 
         });
 
-        quietTimeEnabled.setOnClickListener(new OnClickListener(){
+        quietTimeEnabled.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                quietTimeSettingsActive(((CheckBox)v).isChecked());
+                quietTimeSettingsActive(((CheckBox) v).isChecked());
             }
         });
 
         locationEnabled.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                backgroundLocationActive(((CheckBox)v).isChecked());
+                backgroundLocationActive(((CheckBox) v).isChecked());
             }
         });
 
@@ -140,7 +140,7 @@ public class PushPreferencesActivity extends SherlockFragmentActivity {
 
         //this will be null if a quiet time interval hasn't been set
         Date[] interval = pushPrefs.getQuietTimeInterval();
-        if(interval != null) {
+        if (interval != null) {
             startTime.setCurrentHour(interval[0].getHours());
             startTime.setCurrentMinute(interval[0].getMinutes());
             endTime.setCurrentHour(interval[1].getHours());
@@ -165,10 +165,9 @@ public class PushPreferencesActivity extends SherlockFragmentActivity {
         boolean isPushEnabledInActivity = pushEnabled.isChecked();
         boolean isQuietTimeEnabledInActivity = quietTimeEnabled.isChecked();
 
-        if(isPushEnabledInActivity) {
+        if (isPushEnabledInActivity) {
             PushManager.enablePush();
-        }
-        else {
+        } else {
             PushManager.disablePush();
         }
 
@@ -177,7 +176,7 @@ public class PushPreferencesActivity extends SherlockFragmentActivity {
 
         pushPrefs.setQuietTimeEnabled(isQuietTimeEnabledInActivity);
 
-        if(isQuietTimeEnabledInActivity) {
+        if (isQuietTimeEnabledInActivity) {
 
             // Grab the start date.
             Calendar cal = Calendar.getInstance();

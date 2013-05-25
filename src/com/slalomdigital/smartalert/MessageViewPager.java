@@ -17,7 +17,7 @@ public class MessageViewPager extends ViewPager {
     ViewPagerTouchListener listener;
 
     public MessageViewPager(Context context) {
-        this(context, null, ((FragmentActivity)context).getSupportFragmentManager());
+        this(context, null, ((FragmentActivity) context).getSupportFragmentManager());
     }
 
     public MessageViewPager(Context context, AttributeSet attrs) {

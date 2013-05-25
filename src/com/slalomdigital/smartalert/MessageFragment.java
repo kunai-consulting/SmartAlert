@@ -78,8 +78,7 @@ public class MessageFragment extends SherlockFragment {
         if (message != null) {
             String bodyUrl = message.getMessageBodyUrl();
             this.browser.loadUrl(bodyUrl);
-        }
-        else {
+        } else {
             Logger.info("Couldn't retrieve message for ID: " + id);
         }
     }
@@ -92,7 +91,7 @@ public class MessageFragment extends SherlockFragment {
         this.browser.getSettings().setDomStorageEnabled(true);
         this.browser.getSettings().setAppCacheEnabled(true);
         this.browser.getSettings().setAllowFileAccess(true);
-        this.browser.getSettings().setAppCacheMaxSize(1024*1024*8);
+        this.browser.getSettings().setAppCacheMaxSize(1024 * 1024 * 8);
         this.browser.getSettings().setAppCachePath(UAirship.shared().getApplicationContext().getCacheDir().getAbsolutePath());
         this.browser.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         this.browser.setWebChromeClient(new WebChromeClient());
@@ -117,7 +116,7 @@ public class MessageFragment extends SherlockFragment {
         if (jsInterfaceClass != null) {
             try {
                 Constructor<RichPushMessageJavaScript> constructor =
-                        (Constructor<RichPushMessageJavaScript>)jsInterfaceClass.getConstructor(View.class,
+                        (Constructor<RichPushMessageJavaScript>) jsInterfaceClass.getConstructor(View.class,
                                 String.class);
                 RichPushMessageJavaScript jsInterface = constructor.newInstance(this.browser,
                         this.getArguments().getString(MESSAGE_ID_KEY));
