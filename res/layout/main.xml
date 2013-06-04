@@ -1,8 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:facebook="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
     <include layout="@layout/floating_message_pane" />
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="17dp"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="17dp"
+            android:layout_marginBottom="17dp">
+
+        <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+            <com.facebook.widget.ProfilePictureView
+                    android:id="@+id/profilePicture"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:layout_marginBottom="10dp"
+                    facebook:preset_size="normal"/>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Not Logged In"
+                    android:id="@+id/userName"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginLeft="123dp"
+                    android:layout_alignTop="@+id/profilePicture"/>
+        </RelativeLayout>
+    </LinearLayout>
 
 </RelativeLayout>

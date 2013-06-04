@@ -4,6 +4,8 @@
 
 package com.slalomdigital.smartalert;
 
+import android.widget.ImageView;
+import android.widget.TextView;
 import com.facebook.*;
 import com.facebook.model.*;
 
@@ -16,6 +18,7 @@ import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.facebook.widget.ProfilePictureView;
 import com.urbanairship.UAirship;
 import com.urbanairship.richpush.RichPushManager;
 import com.urbanairship.richpush.RichPushUser;
@@ -32,11 +35,14 @@ public class MainActivity extends SherlockFragmentActivity implements
     ArrayAdapter<String> navAdapter;
     RichPushUser user;
 
+    private ProfilePictureView profilePictureView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
+        profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);
 
         // start Facebook Login
         Session.openActiveSession(this, true, new Session.StatusCallback() {
@@ -52,9 +58,10 @@ public class MainActivity extends SherlockFragmentActivity implements
                         @Override
                         public void onCompleted(GraphUser user, Response response) {
                             if (user != null) {
-                                //TODO: Add some code to the app to show the user once they log in
-                                //TextView welcome = (TextView) findViewById(R.id.welcome);
-                                //welcome.setText("Hello " + user.getName() + "!");
+                                TextView userName = (TextView) findViewById(R.id.userName);
+                                userName.setText(user.getName());
+                                profilePictureView.setProfileId(user.getId());
+
                             }
                         }
                     });
