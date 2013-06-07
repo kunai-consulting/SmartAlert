@@ -20,9 +20,12 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.facebook.widget.ProfilePictureView;
 import com.urbanairship.UAirship;
+import com.urbanairship.push.PushManager;
 import com.urbanairship.richpush.RichPushManager;
 import com.urbanairship.richpush.RichPushUser;
 import com.urbanairship.util.UAStringUtil;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @SuppressWarnings("unused")
 public class MainActivity extends SherlockFragmentActivity implements
@@ -42,6 +45,10 @@ public class MainActivity extends SherlockFragmentActivity implements
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
+
+        //enable push by default...
+        PushManager.enablePush();
+
         profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);
 
         // start Facebook Login
@@ -60,8 +67,15 @@ public class MainActivity extends SherlockFragmentActivity implements
                             if (user != null) {
                                 TextView userName = (TextView) findViewById(R.id.userName);
                                 userName.setText(user.getName());
+                                TextView userLocation = (TextView) findViewById(R.id.userLocation);
+                                try {
+                                    userLocation.setText(((JSONObject) user.getProperty("location")).getString("name"));
+                                } catch (JSONException e) {
+                                    userLocation.setText("Location Unknown");
+                                }
+                                TextView userDemographic = (TextView) findViewById(R.id.userDemographic);
+                                userDemographic.setText(user.getProperty("gender").toString());
                                 profilePictureView.setProfileId(user.getId());
-
                             }
                         }
                     });

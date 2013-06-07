@@ -107,4 +107,12 @@
         </receiver>
         
     </application>
+
+    <!-- Service for checking the user's likes -->
+    <service
+            android:name="CheckLikes"
+            android:icon="@drawable/icon"
+            android:label="@string/check_likes"
+            >
+    </service>
 </manifest> 
