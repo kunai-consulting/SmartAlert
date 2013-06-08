@@ -4,6 +4,11 @@
 
 package com.slalomdigital.smartalert;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.facebook.*;
@@ -27,6 +32,9 @@ import com.urbanairship.util.UAStringUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+import java.util.Calendar;
+
 @SuppressWarnings("unused")
 public class MainActivity extends SherlockFragmentActivity implements
         ActionBar.OnNavigationListener {
@@ -35,14 +43,19 @@ public class MainActivity extends SherlockFragmentActivity implements
     static final String ALIAS_KEY = "com.slalomdigital.smartalert.ALIAS";
     static final int aliasType = 1;
 
+    PendingIntent checkForLikesPendingIntent;
+
     ArrayAdapter<String> navAdapter;
     RichPushUser user;
 
     private ProfilePictureView profilePictureView;
 
+    private static MainActivity currentActivity;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        currentActivity = this;
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
 
@@ -58,6 +71,48 @@ public class MainActivity extends SherlockFragmentActivity implements
             @Override
             public void call(Session session, SessionState state, Exception exception) {
                 if (session.isOpened()) {
+
+                    // Make sure we have permission to get likes so that the CheckForLikes service can do it's job...
+                    if (session.getPermissions().contains("user_likes")) {
+
+                        // If we have permission, check and see if we set the last like...
+                        SharedPreferences likesPrefs = getSharedPreferences(CheckForLikes.LAST_LIKE_PREFERENCE, 0);
+                        if (!likesPrefs.contains("id")) {
+                            // Get the last like and store it in the preferences...
+                            Request.Callback callback = new Request.Callback() {
+
+                                @Override
+                                public void onCompleted(Response response) {
+                                    // response should have the likes
+                                    GraphObject graphObject = response.getGraphObject();
+                                    if (graphObject != null) {
+                                        JSONObject likes;
+                                        long id;
+                                        try {
+                                            likes = graphObject.getInnerJSONObject().getJSONArray("data").getJSONObject(0);
+                                            id = likes.getLong("id");
+                                        } catch (JSONException e) {
+                                            id = 0;
+                                        }
+
+                                        if (id != 0) {
+                                            SharedPreferences likesPrefs = getSharedPreferences(CheckForLikes.LAST_LIKE_PREFERENCE, 0);
+                                            SharedPreferences.Editor editor = likesPrefs.edit();
+                                            editor.putLong("id", id);
+                                            editor.commit();
+                                        }
+                                    }
+                                }
+                            };
+
+                            Request request = new Request(session, "me/likes", null, HttpMethod.GET, callback);
+                            RequestAsyncTask task = new RequestAsyncTask(request);
+                            task.execute();
+                        }
+                    } else {
+                        session.requestNewReadPermissions(new Session.NewPermissionsRequest(MainActivity.currentActivity, Arrays.asList("user_likes")));
+                    }
+
                     // make request to the /me API
                     Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
 
@@ -79,9 +134,29 @@ public class MainActivity extends SherlockFragmentActivity implements
                             }
                         }
                     });
+
                 }
             }
         });
+
+        // Set up the check for likes service...
+
+        Calendar cal = Calendar.getInstance();
+
+        Intent intent = new Intent(this, CheckForLikes.class);
+        checkForLikesPendingIntent = PendingIntent.getService(this, 0, intent, 0);
+
+        AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        // Start every 15 seconds
+        alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkForLikesPendingIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Remove the check for likes service
+        AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarm.cancel(checkForLikesPendingIntent);
     }
 
     @Override
