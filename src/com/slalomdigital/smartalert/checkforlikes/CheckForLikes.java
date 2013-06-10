@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Base64;
+import android.util.Log;
 import com.facebook.*;
 import com.facebook.model.GraphObject;
 import com.urbanairship.richpush.RichPushManager;
@@ -22,6 +23,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -58,11 +60,14 @@ public class CheckForLikes extends Service {
                     if (graphObject != null) {
                         JSONObject likes;
                         long id;
+                        String name;
                         try {
                             likes = graphObject.getInnerJSONObject().getJSONArray("data").getJSONObject(0);
                             id = likes.getLong("id");
+                            name = likes.getString("name");
                         } catch (JSONException e) {
                             id = 0;
+                            name = "";
                         }
 
                         SharedPreferences likesPrefs = getSharedPreferences(CheckForLikes.LAST_LIKE_PREFERENCE, 0);
@@ -77,7 +82,9 @@ public class CheckForLikes extends Service {
 
                             // Send a push notification...
                             RichPushSender pushSender = new RichPushSender(likesService);
-                            pushSender.execute(null);
+
+                            String[] params = {"10% off on " + name, getCouponHtml(name, Long.toString(id), "http://www.sephora.com")};
+                            pushSender.execute(params);
 
                             // Don't stop the service, the RichPushSender does that...
                             return;
@@ -112,5 +119,20 @@ public class CheckForLikes extends Service {
         // so it doesn't interact with the application at all it just runs
         // while the application is running.
         return null;
+    }
+
+    private String getCouponHtml(String name, String id, String webUrl) {
+        return "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "<body>\n" +
+                "\n" +
+                "<h2>We know you like " + name + "...</h2>\n" +
+                "<img border=\"10px\" src=\"https://graph.facebook.com/" + id + "/picture?type=normal\" width=\"100\" height=\"100\">\n" +
+                "<h2>...so shop for it at Sephora and get 10% off with this coupon.</h2>\n" +
+                "<img align=\"middle\" src=\"http://barcode.tec-it.com/barcode.ashx?code=QRCode&modulewidth=fit&dpi=96&imagetype=gif&rotation=0&color=&bgcolor=&fontcolor=&quiet=0&qunit=mm&data="
+                + URLEncoder.encode(webUrl) + "\">\n" +
+                "\n" +
+                "</body>\n" +
+                "</html>";
     }
 }

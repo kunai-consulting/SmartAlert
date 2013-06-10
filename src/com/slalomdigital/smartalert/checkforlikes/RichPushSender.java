@@ -69,6 +69,7 @@ public class RichPushSender extends AsyncTask<String, Integer, HttpResponse> {
             appSecret = null;
         }
 
+        // Create the message and send it...
         if (appKey != null && appSecret!= null) {
             HttpClient httpclient = new DefaultHttpClient();
 
@@ -85,10 +86,10 @@ public class RichPushSender extends AsyncTask<String, Integer, HttpResponse> {
                 ArrayList<String> userList = new ArrayList<String>();
                 userList.add(user.getId());
                 postBody.put("users", new JSONArray(userList));
-                JSONObject androidAlert = new JSONObject("{\"android\": {\"alert\": \"Get 10% off \"}}");
+                JSONObject androidAlert = new JSONObject("{\"android\": {\"alert\": \"" + params[0] + "\"}}");
                 postBody.put("push", androidAlert);
-                postBody.put("title", "Get 10% off!");
-                postBody.put("message", "<html>Do you want 10% off?<html>");
+                postBody.put("title", params[0]);
+                postBody.put("message", params[1]);
                 postBody.put("content-type", "text/html");
 
                 StringEntity se = new StringEntity(postBody.toString());
