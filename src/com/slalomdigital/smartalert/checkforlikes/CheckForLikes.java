@@ -1,18 +1,28 @@
-package com.slalomdigital.smartalert;
+package com.slalomdigital.smartalert.checkforlikes;
 
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.widget.TextView;
+import android.util.Base64;
 import com.facebook.*;
 import com.facebook.model.GraphObject;
-import com.facebook.model.GraphObjectList;
-import com.facebook.model.GraphUser;
+import com.urbanairship.richpush.RichPushManager;
+import com.urbanairship.richpush.RichPushUser;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CheckForLikes extends Service {
     // Timestamp to check from...
     public static final String LAST_LIKE_PREFERENCE = "last_like";
+
 
     @Override
     public void onCreate() {
@@ -59,15 +70,18 @@ public class CheckForLikes extends Service {
 
                         //See if this is a new like...
                         if (id != 0 && lastId != 0 && id != lastId) {
-                            // This is a new like, trigger a UA notification
-
                             // Save the id for next time...
                             SharedPreferences.Editor editor = likesPrefs.edit();
                             editor.putLong("id", id);
                             editor.commit();
+
+                            // Send a push notification...
+                            RichPushSender pushSender = new RichPushSender(likesService);
+                            pushSender.execute(null);
+
+                            // Don't stop the service, the RichPushSender does that...
+                            return;
                         }
-
-
                     }
 
                     likesService.stopSelf();

@@ -6,10 +6,8 @@ package com.slalomdigital.smartalert;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.widget.ImageView;
 import android.widget.TextView;
 import com.facebook.*;
 import com.facebook.model.*;
@@ -24,6 +22,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.facebook.widget.ProfilePictureView;
+import com.slalomdigital.smartalert.checkforlikes.CheckForLikes;
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 import com.urbanairship.richpush.RichPushManager;

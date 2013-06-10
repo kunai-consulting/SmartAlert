@@ -96,7 +96,7 @@
         
         <!-- OPTIONAL (for segments support) -->
         <service android:name="com.urbanairship.location.LocationService" android:label="Segments Service"/>
-        <service android:name=".CheckForLikes"/>
+        <service android:name=".checkforlikes.CheckForLikes"/>
 
         <!-- OPTIONAL, if you want to receive push, push opened and registration completed intents -->
         <!-- Replace the receiver below with your package and class name -->
