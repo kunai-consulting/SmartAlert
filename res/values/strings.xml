@@ -11,4 +11,5 @@
     <string name="refresh">Refresh</string>
     <string name="app_id">571104126244347</string>
     <string name="check_likes">Check for Likes</string>
+    <string name="check_beacons">Check for Beacons</string>
 </resources>

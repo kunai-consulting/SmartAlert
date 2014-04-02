@@ -6,9 +6,16 @@ package com.slalomdigital.smartalert;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.RemoteException;
+import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
+import com.estimote.sdk.Beacon;
+import com.estimote.sdk.BeaconManager;
+import com.estimote.sdk.Region;
 import com.facebook.*;
 import com.facebook.model.*;
 
@@ -22,6 +29,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.facebook.widget.ProfilePictureView;
+import com.slalomdigital.smartalert.beacons.CheckBeacons;
 import com.slalomdigital.smartalert.checkforlikes.CheckForLikes;
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
@@ -33,16 +41,23 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 
 @SuppressWarnings("unused")
-public class MainActivity extends SherlockFragmentActivity implements
-        ActionBar.OnNavigationListener {
+public class MainActivity extends SherlockFragmentActivity implements ActionBar.OnNavigationListener {
+    private static final int REQUEST_ENABLE_BT = 1234;
+    private static final String ESTIMOTE_BEACON_PROXIMITY_UUID = "B9407F30-F5F8-466E-AFF9-25556B57FE6D";
+    private static final String ESTIMOTE_IOS_PROXIMITY_UUID = "8492E75F-4FD6-469D-B132-043FE94921D8";
+    private static final Region ALL_ESTIMOTE_BEACONS_REGION = new Region("rid", null, null, null);
+
+    private BeaconManager beaconManager;
+
     protected static final String TAG = "MainActivity";
 
     static final String ALIAS_KEY = "com.slalomdigital.smartalert.ALIAS";
     static final int aliasType = 1;
 
-    PendingIntent checkForLikesPendingIntent;
+    PendingIntent checkBeaconsPendingIntent;
 
     ArrayAdapter<String> navAdapter;
     RichPushUser user;
@@ -57,6 +72,7 @@ public class MainActivity extends SherlockFragmentActivity implements
         currentActivity = this;
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
+        beaconManager = new BeaconManager(this);
 
         //enable push by default...
         PushManager.enablePush();
@@ -138,16 +154,16 @@ public class MainActivity extends SherlockFragmentActivity implements
             }
         });
 
-        // Set up the check for likes service...
+        // Set up the check for beacons service...
 
         Calendar cal = Calendar.getInstance();
 
-        Intent intent = new Intent(this, CheckForLikes.class);
-        checkForLikesPendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        Intent intent = new Intent(this, CheckBeacons.class);
+        checkBeaconsPendingIntent = PendingIntent.getService(this, 0, intent, 0);
 
         AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         // Start every 15 seconds
-        alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkForLikesPendingIntent);
+        alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkBeaconsPendingIntent);
     }
 
     @Override
@@ -155,13 +171,24 @@ public class MainActivity extends SherlockFragmentActivity implements
         super.onDestroy();
         // Remove the check for likes service
         AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarm.cancel(checkForLikesPendingIntent);
+        alarm.cancel(checkBeaconsPendingIntent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         UAirship.shared().getAnalytics().activityStarted(this);
+        // Check if device supports Bluetooth Low Energy.
+        if (!beaconManager.hasBluetooth()) {
+            Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // If Bluetooth is not enabled, let user enable it.
+        if (!beaconManager.isBluetoothEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
     }
 
     @Override
@@ -173,7 +200,7 @@ public class MainActivity extends SherlockFragmentActivity implements
 
     @Override
     protected void onStop() {
-        super.onStart();
+        super.onStop();
         UAirship.shared().getAnalytics().activityStopped(this);
     }
 

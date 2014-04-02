@@ -10,6 +10,13 @@
     <uses-sdk android:minSdkVersion="14"
               android:targetSdkVersion="16"/>
 
+    <!-- Needed permissions in order to scan for beacons. -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+    <!-- Declaration that this app is usable on phones with Bluetooth Low Energy. -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+
     <!-- REQUIRED PERMISSIONS (for Urban Airship GCM) -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -96,7 +103,11 @@
         
         <!-- OPTIONAL (for segments support) -->
         <service android:name="com.urbanairship.location.LocationService" android:label="Segments Service"/>
-        <service android:name=".checkforlikes.CheckForLikes"/>
+        <service android:name=".beacons.CheckBeacons"/>
+
+        <!-- Estimote service responsible for scanning beacons. -->
+        <service android:name="com.estimote.sdk.service.BeaconService"
+                 android:exported="false"/>
 
         <!-- OPTIONAL, if you want to receive push, push opened and registration completed intents -->
         <!-- Replace the receiver below with your package and class name -->
@@ -111,7 +122,7 @@
 
     <!-- Service for checking the user's likes -->
     <service
-            android:name="CheckForLikes"
+            android:name="CheckBeacons"
             android:icon="@drawable/icon"
             android:label="@string/check_likes"
             >
