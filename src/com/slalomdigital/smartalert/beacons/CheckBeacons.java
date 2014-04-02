@@ -39,17 +39,21 @@ public class CheckBeacons extends Service {
         // Check for new beacons...
 
         beaconManager = new BeaconManager(this);
-        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
-            @Override
-            public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
-                //Send the beacons seen to the server...
-                for (Beacon rangedBeacon : rangedBeacons) {
-                    JSONObject body = new JSONObject();
-                    BeaconServerSender beaconSender = new BeaconServerSender(CheckBeacons.this);
-                    beaconSender.execute(body);
+        if (beaconManager.hasBluetooth() && beaconManager.isBluetoothEnabled()) {
+            beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+                @Override
+                public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
+                    //Send the beacons seen to the server...
+                    for (Beacon rangedBeacon : rangedBeacons) {
+
+                        BeaconServerSender.updateBeacon();
+                    }
                 }
-            }
-        });
+            });
+        }
+        else {
+            beaconManager = null;
+        }
     }
 
     private List<Beacon> filterBeacons(List<Beacon> beacons) {
@@ -66,8 +70,13 @@ public class CheckBeacons extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        connectToService();
-        return START_STICKY;
+        if (beaconManager != null) {
+            return START_STICKY;
+        }
+        else {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
     }
 
     public IBinder onBind(Intent intent) {
@@ -79,19 +88,23 @@ public class CheckBeacons extends Service {
 
     @Override
     public void onDestroy() {
-        try {
-            beaconManager.stopRanging(ALL_ESTIMOTE_BEACONS_REGION);
-        } catch (RemoteException e) {
-            Log.d(TAG, "Error while stopping ranging", e);
+        if (beaconManager != null) {
+            try {
+                beaconManager.stopRanging(ALL_ESTIMOTE_BEACONS_REGION);
+                Log.d(TAG, "Stopping estimote scanning.");
+            } catch (RemoteException e) {
+                Log.d(TAG, "Error while stopping ranging", e);
+            }
+            beaconManager.disconnect();
         }
-        beaconManager.disconnect();
 
         super.onDestroy();
     }
 
     private void connectToService() {
-        Toast.makeText(this, "Scanning for estimotes...",
-                Toast.LENGTH_LONG).show();
+        /* Toast.makeText(this, "Scanning for estimotes...",
+                Toast.LENGTH_LONG).show(); */
+        Log.d(TAG, "Scanning for estimotes...");
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {

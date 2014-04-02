@@ -1,11 +1,8 @@
 package com.slalomdigital.smartalert.beacons;
 
-import android.app.Service;
+import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Base64;
 import android.util.Log;
-import com.urbanairship.richpush.RichPushManager;
-import com.urbanairship.richpush.RichPushUser;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -15,13 +12,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Properties;
 
 /**
@@ -33,10 +28,12 @@ import java.util.Properties;
  */
 public class BeaconServerSender extends AsyncTask<JSONObject, Integer, HttpResponse> {
 
-    private Service service;
+    private Context context;
+    private String path;
 
-    public BeaconServerSender(Service service) {
-        this.service = service;
+    public BeaconServerSender(Context context, String path) {
+        this.context = context;
+        this.path = path;
     }
 
     @Override
@@ -44,7 +41,7 @@ public class BeaconServerSender extends AsyncTask<JSONObject, Integer, HttpRespo
         // Get the server URL
         String server;
         try {
-            InputStream inputStream = service.getResources().getAssets().open("beaconcms.properties");
+            InputStream inputStream = context.getResources().getAssets().open("beaconcms.properties");
             Properties properties = new Properties();
             properties.load(inputStream);
 
@@ -60,7 +57,7 @@ public class BeaconServerSender extends AsyncTask<JSONObject, Integer, HttpRespo
         if (server != null) {
             HttpClient httpclient = new DefaultHttpClient();
 
-            HttpPost httppost = new HttpPost("https://" + server);
+            HttpPost httppost = new HttpPost("http://" + server + "/" + path);
             httppost.setHeader("Content-type", "application/json");
 
             try {
@@ -107,6 +104,31 @@ public class BeaconServerSender extends AsyncTask<JSONObject, Integer, HttpRespo
 
     @Override
     public void onPostExecute(HttpResponse httpResponse) {
-        service.stopSelf();
+
+    }
+
+    /**
+     * Create or Update a mobile_user
+     */
+    public static void updateMobileUser(String firstName, String lastName, String email, String uid, Context context) {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("first_name", firstName);
+            body.put("last_name", lastName);
+            body.put("email", email);
+            body.put("uid", uid);
+        } catch (JSONException e) {
+            Log.e(BeaconServerSender.class.toString(), "JSONException while creating the body message: " + e.getMessage());
+        }
+
+        BeaconServerSender sender = new BeaconServerSender(context, "users/mobile_user");
+        sender.execute(body);
+    }
+
+    /**
+     * Create or Update a beacon
+     */
+    public static void updateBeacon() {
+        //TODO: implement
     }
 }

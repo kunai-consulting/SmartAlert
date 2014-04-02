@@ -8,12 +8,8 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.RemoteException;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.facebook.*;
@@ -29,8 +25,8 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.facebook.widget.ProfilePictureView;
+import com.slalomdigital.smartalert.beacons.BeaconServerSender;
 import com.slalomdigital.smartalert.beacons.CheckBeacons;
-import com.slalomdigital.smartalert.checkforlikes.CheckForLikes;
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 import com.urbanairship.richpush.RichPushManager;
@@ -41,7 +37,6 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 
 @SuppressWarnings("unused")
 public class MainActivity extends SherlockFragmentActivity implements ActionBar.OnNavigationListener {
@@ -62,7 +57,10 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
     ArrayAdapter<String> navAdapter;
     RichPushUser user;
 
-    private ProfilePictureView profilePictureView;
+    private String facebookId;
+    private String facebookUserName;
+    private String facebookUserLocation;
+    private String facebookUserDemographic;
 
     private static MainActivity currentActivity;
 
@@ -77,93 +75,89 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
         //enable push by default...
         PushManager.enablePush();
 
-        profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);
+        if (facebookId == null) {
+            // start Facebook Login
+            Session.openActiveSession(this, true, new Session.StatusCallback() {
 
-        // start Facebook Login
-        Session.openActiveSession(this, true, new Session.StatusCallback() {
+                // callback when session changes state
+                @Override
+                public void call(Session session, SessionState state, Exception exception) {
+                    if (session.isOpened()) {
+                        // Make sure we have permission to get likes...
+                        if (!session.getPermissions().contains("user_likes")) {
+                            session.requestNewReadPermissions(new Session.NewPermissionsRequest(MainActivity.currentActivity, Arrays.asList("user_likes")));
+                        }
 
-            // callback when session changes state
-            @Override
-            public void call(Session session, SessionState state, Exception exception) {
-                if (session.isOpened()) {
+                        // make request to the /me API
+                        Request.newMeRequest(session, new Request.GraphUserCallback() {
 
-                    // Make sure we have permission to get likes so that the CheckForLikes service can do it's job...
-                    if (session.getPermissions().contains("user_likes")) {
-
-                        // If we have permission, check and see if we set the last like...
-                        SharedPreferences likesPrefs = getSharedPreferences(CheckForLikes.LAST_LIKE_PREFERENCE, 0);
-                        if (!likesPrefs.contains("id")) {
-                            // Get the last like and store it in the preferences...
-                            Request.Callback callback = new Request.Callback() {
-
-                                @Override
-                                public void onCompleted(Response response) {
-                                    // response should have the likes
-                                    GraphObject graphObject = response.getGraphObject();
-                                    if (graphObject != null) {
-                                        JSONObject likes;
-                                        long id;
-                                        try {
-                                            likes = graphObject.getInnerJSONObject().getJSONArray("data").getJSONObject(0);
-                                            id = likes.getLong("id");
-                                        } catch (JSONException e) {
-                                            id = 0;
-                                        }
-
-                                        if (id != 0) {
-                                            SharedPreferences likesPrefs = getSharedPreferences(CheckForLikes.LAST_LIKE_PREFERENCE, 0);
-                                            SharedPreferences.Editor editor = likesPrefs.edit();
-                                            editor.putLong("id", id);
-                                            editor.commit();
-                                        }
+                            // callback after Graph API response with user object
+                            @Override
+                            public void onCompleted(GraphUser user, Response response) {
+                                if (user != null) {
+                                    facebookId = user.getId();
+                                    facebookUserName = user.getName();
+                                    try {
+                                        facebookUserLocation = ((JSONObject) user.getProperty("location")).getString("name");
+                                    } catch (JSONException e) {
+                                        facebookUserLocation = "Location Unknown";
                                     }
+                                    facebookUserDemographic = user.getProperty("gender").toString();
+
+                                    //Try to update the view...
+                                    updateView();
+
+                                    //Now update the beacon CMS...
+                                    BeaconServerSender.updateMobileUser(user.getFirstName(), user.getLastName(), user.getId(), RichPushManager.shared().getRichPushUser().getId(), MainActivity.currentActivity);
                                 }
-                            };
-
-                            Request request = new Request(session, "me/likes", null, HttpMethod.GET, callback);
-                            RequestAsyncTask task = new RequestAsyncTask(request);
-                            task.execute();
-                        }
-                    } else {
-                        session.requestNewReadPermissions(new Session.NewPermissionsRequest(MainActivity.currentActivity, Arrays.asList("user_likes")));
-                    }
-
-                    // make request to the /me API
-                    Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
-
-                        // callback after Graph API response with user object
-                        @Override
-                        public void onCompleted(GraphUser user, Response response) {
-                            if (user != null) {
-                                TextView userName = (TextView) findViewById(R.id.userName);
-                                userName.setText(user.getName());
-                                TextView userLocation = (TextView) findViewById(R.id.userLocation);
-                                try {
-                                    userLocation.setText(((JSONObject) user.getProperty("location")).getString("name"));
-                                } catch (JSONException e) {
-                                    userLocation.setText("Location Unknown");
-                                }
-                                TextView userDemographic = (TextView) findViewById(R.id.userDemographic);
-                                userDemographic.setText(user.getProperty("gender").toString());
-                                profilePictureView.setProfileId(user.getId());
                             }
-                        }
-                    });
+                        }).executeAsync();
 
+                    }
                 }
+            });
+        }
+
+        // Check if device supports Bluetooth Low Energy.
+        if (beaconManager.hasBluetooth()) {
+            // Set up the check for beacons service...
+            Calendar cal = Calendar.getInstance();
+
+            Intent intent = new Intent(this, CheckBeacons.class);
+            checkBeaconsPendingIntent = PendingIntent.getService(this, 0, intent, 0);
+
+            AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            // Start every 15 seconds
+            alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkBeaconsPendingIntent);
+        }
+        else {
+            Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
+            beaconManager.disconnect();
+            beaconManager = null;
+            return;
+        }
+    }
+
+    private void updateView() {
+        if (facebookId != null) {
+            ProfilePictureView profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);
+            if (profilePictureView != null) {
+                profilePictureView.setProfileId(facebookId);
             }
-        });
 
-        // Set up the check for beacons service...
-
-        Calendar cal = Calendar.getInstance();
-
-        Intent intent = new Intent(this, CheckBeacons.class);
-        checkBeaconsPendingIntent = PendingIntent.getService(this, 0, intent, 0);
-
-        AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        // Start every 15 seconds
-        alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkBeaconsPendingIntent);
+            TextView userName = (TextView) findViewById(R.id.userName);
+            if (userName != null && facebookUserName != null) {
+                userName.setText(facebookUserName);
+            }
+            TextView userDemographic = (TextView) findViewById(R.id.userDemographic);
+            if (userDemographic != null && facebookUserDemographic != null) {
+                userDemographic.setText(facebookUserDemographic);
+            }
+            TextView userLocation = (TextView) findViewById(R.id.userLocation);
+            if (userLocation != null && facebookUserLocation != null) {
+                userLocation.setText(facebookUserLocation);
+            }
+        }
     }
 
     @Override
@@ -178,17 +172,13 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
     protected void onStart() {
         super.onStart();
         UAirship.shared().getAnalytics().activityStarted(this);
-        // Check if device supports Bluetooth Low Energy.
-        if (!beaconManager.hasBluetooth()) {
-            Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
-            return;
-        }
-
         // If Bluetooth is not enabled, let user enable it.
-        if (!beaconManager.isBluetoothEnabled()) {
+        if (beaconManager != null && !beaconManager.isBluetoothEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        updateView();
     }
 
     @Override
