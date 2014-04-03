@@ -108,7 +108,7 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
                                     updateView();
 
                                     //Now update the beacon CMS...
-                                    BeaconServerSender.updateMobileUser(user.getFirstName(), user.getLastName(), user.getId(), RichPushManager.shared().getRichPushUser().getId(), MainActivity.currentActivity);
+                                    BeaconServerSender.updateMobileUser(user.getFirstName(), user.getLastName(), user.getId(), PushManager.shared().getAPID(), MainActivity.currentActivity);
                                 }
                             }
                         }).executeAsync();
