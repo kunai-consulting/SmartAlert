@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Sephora</string>
+    <string name="app_name">SmartAlert</string>
     <string name="no_messages">No messages</string>
     <string name="inbox_title">Your Inbox</string>
     <string name="add_message">Add Message</string>
@@ -12,4 +12,5 @@
     <string name="app_id">571104126244347</string>
     <string name="check_likes">Check for Likes</string>
     <string name="check_beacons">Check for Beacons</string>
+    <string name="title_beacon_activity_display_message">Beacon Message</string>
 </resources>

@@ -58,7 +58,6 @@ public class MessageFragment extends SherlockFragment {
     }
 
     // public api
-
     public String getMessageId() {
         return this.getArguments().getString(MESSAGE_ID_KEY);
     }

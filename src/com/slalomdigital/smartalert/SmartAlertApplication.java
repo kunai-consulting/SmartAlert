@@ -6,6 +6,7 @@ package com.slalomdigital.smartalert;
 
 import android.app.Application;
 
+import android.content.Context;
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 import com.urbanairship.richpush.RichPushManager;
@@ -19,11 +20,20 @@ public class SmartAlertApplication extends Application {
     public static final String[] navList = new String[]{
             HOME_ACTIVITY, INBOX_ACTIVITY
     };
+    private static Context context;
+
 
     @Override
     public void onCreate() {
+        super.onCreate();
+        context = getApplicationContext();
         UAirship.takeOff(this);
         PushManager.shared().setIntentReceiver(PushReceiver.class);
         RichPushManager.setJavascriptInterface(RichPushMessageJavaScript.class, "urbanairship");
+    }
+
+
+    public static Context getAppContext() {
+        return SmartAlertApplication.context;
     }
 }

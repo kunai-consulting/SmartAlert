@@ -9,8 +9,12 @@ import android.widget.Toast;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.estimote.sdk.Utils;
+import com.slalomdigital.smartalert.BeaconActivity;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,32 +32,75 @@ public class CheckBeacons extends Service {
     private static final String ESTIMOTE_IOS_PROXIMITY_UUID = "8492E75F-4FD6-469D-B132-043FE94921D8";
     private static final Region ALL_ESTIMOTE_BEACONS_REGION = new Region("rid", null, null, null);
 
-    // Timestamp to check from...
-    public static final String LAST_LIKE_PREFERENCE = "last_like";
-    private BeaconManager beaconManager;
-    private Beacon beacon;
+    private static final double MIN_DISTANCE = 0.5; //Minimum distance in meters for a beacon
 
+    // Timestamp to check from...
+    private BeaconManager beaconManager;
 
     @Override
     public void onCreate() {
-        // Check for new beacons...
+            // Check for beacons...
+            beaconManager = new BeaconManager(this);
+            if (beaconManager.hasBluetooth() && beaconManager.isBluetoothEnabled()) {
+                beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+                    @Override
+                    public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
+                        long timestamp = System.currentTimeMillis();
+                        //Send the beacons seen to the server...
+                        List<CMSBeacon> cmsBeacons;
+                        try {
+                            // Get the CMS beacons...
+                            cmsBeacons = CMSBeacon.getBeacons();
+                        } catch (JSONException e) {
+                            Log.e(TAG, "JSONException while getting beacons from shared prefs shouldn't happen.");
+                            return;
+                        }
 
-        beaconManager = new BeaconManager(this);
-        if (beaconManager.hasBluetooth() && beaconManager.isBluetoothEnabled()) {
-            beaconManager.setRangingListener(new BeaconManager.RangingListener() {
-                @Override
-                public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
-                    //Send the beacons seen to the server...
-                    for (Beacon rangedBeacon : rangedBeacons) {
+                        // Check for beacons in range...
+                        for (Beacon rangedBeacon : rangedBeacons) {
+                            if (Utils.computeAccuracy(rangedBeacon) < MIN_DISTANCE) {
+                                for (CMSBeacon cmsBeacon : cmsBeacons) {
+                                    if (rangedBeacon.getProximityUUID().equalsIgnoreCase(cmsBeacon.uuid) &&
+                                        rangedBeacon.getMajor() == cmsBeacon.major &&
+                                        rangedBeacon.getMinor() == cmsBeacon.minor) {
+                                        cmsBeacon.lastSeen = timestamp;
+                                        //Is this the first time the beacon was seen?
+                                        if (cmsBeacon.firstSeen == 0) {
+                                            cmsBeacon.firstSeen = cmsBeacon.lastSeen;
+                                        }
 
-                        BeaconServerSender.updateBeacon();
+                                        // Check to see if we should show the arrival content...
+                                        if (!cmsBeacon.item.shown &&
+                                            cmsBeacon.item.show_after_seconds * 1000 <= cmsBeacon.lastSeen - cmsBeacon.firstSeen) {
+                                            BeaconActivity.showArrivalItem(cmsBeacon.item);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Check for beacons gone out of range...
+                        for (CMSBeacon cmsBeacon: cmsBeacons) {
+                            if (cmsBeacon.item.shown && (cmsBeacon.lastSeen + (cmsBeacon.item.show_after_seconds * 1000)) < timestamp) {
+                                cmsBeacon.lastSeen = 0;
+                                cmsBeacon.firstSeen = 0;
+                                BeaconActivity.showExitItem(cmsBeacon.item);
+                            }
+                        }
+
+                        // Write the beacons back in case there were updates...
+                        try {
+                            CMSBeacon.setBeacons(cmsBeacons);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "JSONException while saving beacons to shared prefs shouldn't happen.");
+                        } catch (IOException e) {
+                            Log.e(TAG, "IOException while saving beacons to shared prefs: " + e.getMessage());
+                        }
                     }
-                }
-            });
-        }
-        else {
-            beaconManager = null;
-        }
+                });
+            } else {
+                beaconManager = null;
+            }
     }
 
     private List<Beacon> filterBeacons(List<Beacon> beacons) {
@@ -71,9 +118,9 @@ public class CheckBeacons extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (beaconManager != null) {
-            return START_STICKY;
-        }
-        else {
+            connectToService();
+            return START_NOT_STICKY;
+        } else {
             stopSelf();
             return START_NOT_STICKY;
         }

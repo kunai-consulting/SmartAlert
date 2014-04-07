@@ -70,6 +70,7 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
         currentActivity = this;
         this.setContentView(R.layout.main);
         this.user = RichPushManager.shared().getRichPushUser();
+        BeaconServerSender.updateBeacons(this);
         beaconManager = new BeaconManager(this);
 
         //enable push by default...
@@ -108,7 +109,7 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
                                     updateView();
 
                                     //Now update the beacon CMS...
-                                    BeaconServerSender.updateMobileUser(user.getFirstName(), user.getLastName(), user.getId(), PushManager.shared().getAPID(), MainActivity.currentActivity);
+                                    BeaconServerSender.updateMobileUser(user.getFirstName(), user.getLastName(), facebookId, facebookId, PushManager.shared().getAPID(), "android");
                                 }
                             }
                         }).executeAsync();
