@@ -128,8 +128,8 @@ public class MainActivity extends SherlockFragmentActivity implements ActionBar.
             checkBeaconsPendingIntent = PendingIntent.getService(this, 0, intent, 0);
 
             AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            // Start every 15 seconds
-            alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 15 * 1000, checkBeaconsPendingIntent);
+            // Start every 5 seconds
+            alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 5 * 1000, checkBeaconsPendingIntent);
         }
         else {
             Toast.makeText(this, "Device does not have Bluetooth Low Energy", Toast.LENGTH_LONG).show();
